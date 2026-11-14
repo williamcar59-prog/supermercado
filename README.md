@@ -8,6 +8,10 @@ abre offline), roda no celular e no computador. Dados guardados no próprio
 aparelho (sem login) — e, opcionalmente, **compartilhados com a comunidade**
 via Supabase (preço que você registra ajuda quem pesquisa).
 
+**▶ No ar: <https://williamcar59-prog.github.io/supermercado/>**
+(PWA instalável em qualquer aparelho. Publicado automático pelo GitHub
+Actions a cada push em `main` — ver `.github/workflows/deploy.yml`.)
+
 ## Rodar
 
 ```powershell
