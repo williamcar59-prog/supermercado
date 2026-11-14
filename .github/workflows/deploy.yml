@@ -1,0 +1,68 @@
+# =====================================================================
+# SUPER_MERCADO — build + deploy automático no GitHub Pages
+#
+# Aprovado pelo cliente em 14/11/2026 (produção — manual 09, regra de ouro).
+# A cada push em `main`: roda os testes → build → publica no Pages.
+#
+# Segredos do repo (Settings → Secrets → Actions), definidos via `gh`,
+# nunca no código: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY.
+# (A anon key é pública por design — vai no bundle mesmo; a proteção é a
+#  RLS do banco. Mesmo assim fica em secret para não aparecer no histórico.)
+#
+# BASE_PATH = subcaminho do Pages (= nome do repo). Se trocar o nome do
+# repositório, troque AQUI e no vite.config.ts leitura automática.
+# =====================================================================
+
+name: deploy-github-pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências (trava igual à local)
+        run: npm ci
+
+      - name: Testes da lógica
+        run: npm run teste
+
+      - name: Build com base do Pages
+        run: npm run build
+        env:
+          BASE_PATH: /supermercado/
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
